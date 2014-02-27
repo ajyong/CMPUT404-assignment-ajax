@@ -22,7 +22,7 @@
 
 
 import flask
-from flask import Flask, request
+from flask import Flask, request, redirect, url_for
 import json
 app = Flask(__name__)
 app.debug = True
@@ -61,7 +61,7 @@ myWorld = World()
 
 # I give this to you, this is how you get the raw body/data portion of a post in flask
 # this should come with flask but whatever, it's not my project.
-def flask_post_json():
+def flask_post_json(request):
     '''Ah the joys of frameworks! They do so much work for you
        that they get in the way of sane operation!'''
     if (request.json != None):
@@ -74,7 +74,7 @@ def flask_post_json():
 @app.route("/")
 def hello():
     '''Return something coherent here.. perhaps redirect to /static/index.html '''
-    return None
+    return redirect(url_for('static', filename='index.html'))
 
 @app.route("/entity/<entity>", methods=['POST','PUT'])
 def update(entity):
@@ -83,8 +83,9 @@ def update(entity):
 
 @app.route("/world", methods=['POST','GET'])    
 def world():
-    '''you should probably return the world here'''
-    return None
+    resp = make_response(json.dumps(myWorld.world))
+    resp.headers['Content-Type'] = 'application/json'
+    return resp
 
 @app.route("/entity/<entity>")    
 def get_entity(entity):
@@ -93,7 +94,7 @@ def get_entity(entity):
 
 @app.route("/clear", methods=['POST','GET'])
 def clear():
-    '''Clear the world out!'''
+    myWorld.clear()
     return None
 
 if __name__ == "__main__":
