@@ -71,9 +71,15 @@ def flask_post_json(request):
     else:
         return json.loads(request.form.keys()[0])
 
+# Make a JSON response from raw data
+def make_json_response(rawData):
+    resp = make_response(json.dumps(rawData))
+    resp.headers['Content-Type'] = 'application/json'
+    return resp
+
 @app.route("/")
 def hello():
-    '''Return something coherent here.. perhaps redirect to /static/index.html '''
+    '''Redirect to /static/index.html '''
     return redirect(url_for('static', filename='index.html'))
 
 @app.route("/entity/<entity>", methods=['POST','PUT'])
@@ -84,30 +90,21 @@ def update(entity):
     for key, value in data.iteritems():
         myWorld.update(entity, key, value);
 
-    resp = make_response(json.dumps(myWorld.get(entity)))
-    resp.headers['Content-Type'] = 'application/json'
-    return resp
+    return make_json_response(myWorld.get(entity))
 
 @app.route("/world", methods=['POST','GET'])    
 def world():
-    resp = make_response(json.dumps(myWorld.world()))
-    resp.headers['Content-Type'] = 'application/json'
-    return resp
+    return make_json_response(myWorld.world())
 
 @app.route("/entity/<entity>")    
 def get_entity(entity):
     '''This is the GET version of the entity interface, return a representation of the entity'''
-    resp = make_response(json.dumps(myWorld.get(entity)))
-    resp.headers['Content-Type'] = 'application/json'
-    return resp
+    return make_json_response(myWorld.get(entity))
 
 @app.route("/clear", methods=['POST','GET'])
 def clear():
     myWorld.clear()
-
-    resp = make_response(json.dumps(myWorld.world()))
-    resp.headers['Content-Type'] = 'application/json'
-    return resp
+    return make_json_response(myWorld.world())
 
 if __name__ == "__main__":
     app.run()
