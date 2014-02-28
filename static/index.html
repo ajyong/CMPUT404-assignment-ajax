@@ -38,8 +38,10 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
         if (xhr.readyState==4) {
             try {
                 if (xhr.status==200) {
-                    data = JSON.parse(xhr.responseText);
-                    callback(data);
+                    var data = JSON.parse(xhr.responseText);
+                    if (callback) {
+                      callback(data);
+                    }
                     //XXX: parse some JSON from the request!
                     //XXX: Pass the data to the callback!
                 }
@@ -145,7 +147,7 @@ function addEntity(entity, data) {
     drawNextFrame(); // (but should we?)
 
     //XXX: Send a XHTML Request that updates the entity you just  modified!
-    sendJSONXMLHTTPRequest(document.location.origin + "/entity/" + encodeURIComponent(entity), data, function(data) { });
+    sendJSONXMLHTTPRequest(document.location.origin + "/entity/" + encodeURIComponent(entity), data, null);
 }
 
 var counter = 0;
@@ -270,17 +272,16 @@ mouse.mousedraggers.push(function(x,y,clicked,e) {
 function update() {
     sendJSONXMLHTTPRequest(document.location.origin + "/world", null,
       function(data) {
-          world = data;
-          drawNextFrame();
+          if (JSON.stringify(data) != JSON.stringify(world)) {
+            world = data;
+            drawNextFrame();
+          }
       });
     drawFrame();
 }
 
 // 30 frames per second
 var updateId = setInterval(update, 1000/30.0);
-
-
-
     </script>
 </body>
 </html>
