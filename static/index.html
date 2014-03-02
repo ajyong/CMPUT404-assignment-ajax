@@ -6,7 +6,7 @@
     <meta content='width=device-width; height=device-height; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;' name='viewport' />
     <meta name="viewport" content="width=device-width" />
     <meta name="license" content="
-        Copyright 2013 Abram Hindle
+        Copyright 2014 Abram Hindle, Aaron Yong
         
         Licensed under the Apache License, Version 2.0 (the "License");
         you may not use this file except in compliance with the License.
@@ -42,8 +42,6 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
                     if (callback) {
                       callback(data);
                     }
-                    //XXX: parse some JSON from the request!
-                    //XXX: Pass the data to the callback!
                 }
             } 
             catch(e) {
@@ -55,9 +53,6 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.setRequestHeader('Accept', 'application/json');
     xhr.send(JSON.stringify(objects));
-    //XXX: POST to a URL
-    //XXX: set the mimetype and the accept headers!
-    // Remember to use application/json !
 }
 
 
@@ -70,7 +65,6 @@ function drawCircle(context,entity) {
         lineWidth = 3;
         var x = entity["x"];
         var y = entity["y"];
-        //moveTo(x,y);
         fillStyle = entity["colour"];
         strokeStyle = fillStyle;
         arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
@@ -144,16 +138,31 @@ function getPosition(e) {
 
 function addEntity(entity, data) {
     world[entity] = data;
-    drawNextFrame(); // (but should we?)
 
-    //XXX: Send a XHTML Request that updates the entity you just  modified!
-    sendJSONXMLHTTPRequest(document.location.origin + "/entity/" + encodeURIComponent(entity), data, null);
+    sendJSONXMLHTTPRequest(
+      document.location.origin + "/entity/" + encodeURIComponent(entity), 
+      data, 
+      null);
 }
 
+// Rudimentary UID generated using timestamp
+var uniqueId = Date.now().toString();
 var counter = 0;
 function addEntityWithoutName(data) {
-    //var name = "X"+Math.floor((Math.random()*100)+1);
-    var name = "X"+(counter++)%100;
+    // Each client limited to 200 entities
+    var name = uniqueId + (counter++) % 200;
+
+    // When a client drags the mouse, each of those circles adopts a different
+    // shade of orange
+    if (!data["colour"]) {
+      var suffix = counter % 100;
+      if (suffix < 10) {
+        data["colour"] = "#FF990" + suffix;
+      } else {
+        data["colour"] = "#FF99" + suffix;
+      }
+    }
+
     addEntity(name,data);
 }
 
@@ -195,21 +204,17 @@ mouse = (function() {
                 var y = pos[1];
 	        self.clicked = 1;
                 self.callListeners(self.mousedowners,x,y,self.clicked,e);
-                //addEntityWithoutName({'x':x,'y':y,'colour':'red'});
             }
         },
         mouseup: function(e) {
             e.preventDefault();
-            //alert(getPosition(e));
             if (self.wasClicked(e)) {
                 var pos = getPosition(e);
                 var x = pos[0];
                 var y = pos[1];
-	        //self.poppin(x,y);
 	        self.clicked = 0;
                 self.selected = -1;
                 self.callListeners(self.mouseuppers,x,y,self.clicked,e);
-                //addEntityWithoutName({'x':x,'y':y,'colour':'blue'});
             }
         },
         touchstart: function(e) {
@@ -226,12 +231,11 @@ mouse = (function() {
                 var pos = getPosition(e);
                 var x = pos[0];
                 var y = pos[1];
-	        if (self.clicked != 0) {
-	            //self.squeakin(x,y);
-                    self.callListeners(self.mousedraggers,x,y,self.clicked,e);
-	        }
+            if (self.clicked != 0) {
+                      self.callListeners(self.mousedraggers,x,y,self.clicked,e);
+            }
                 self.callListeners(self.mousemovers,x,y,self.clicked,e);
-            }            
+            }
 	},
 	touchmove: function(e) {
             self.lasttouch = e;                                         
@@ -256,16 +260,15 @@ mouse = (function() {
 // Add the application specific mouse listeners!
 //XXX: TODO Make these prettier!
 mouse.mousedowners.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'blue','radius':50});
+    addEntityWithoutName({'x':x,'y':y,'colour':'#FF6600', 'radius':20});
 });
 
 mouse.mouseuppers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'red','radius':50});
+    addEntityWithoutName({'x':x,'y':y,'colour':'#FFFF00', 'radius':20});
 });
 
 mouse.mousedraggers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'green',
-                          'radius':10});
+    addEntityWithoutName({'x':x,'y':y, 'radius':10});
 });
 
 
